@@ -1,0 +1,14 @@
+{
+  "qianhai": {
+    "subscriptionID": "example-subscription",
+    "resourceGroup": "default",
+    "nodeZone": "cn-sz-01a",
+    "taskZone": "cn-sz-01z",
+    "pool": "example-pool",
+    "workspace": "example-workspace"
+  },
+  "jiuzhang": {
+    "aidcID": 1,
+    "regionName": "示例机房"
+  }
+}

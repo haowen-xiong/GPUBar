@@ -1,0 +1,13 @@
+.build/
+.swiftpm/
+dist/
+work/
+.DS_Store
+*.app/
+*.dSYM/
+*.zip
+.env
+.env.*
+*.local.json
+credentials*.json
+snapshots.json
