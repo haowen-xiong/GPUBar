@@ -4,6 +4,12 @@ A native macOS menu bar monitor for Qianhai ACP and Jiuzhang HyperTrain. Track G
 
 GPUBar 在 macOS 菜单栏中显示前海 ACP 的 GPU 未分配余量、九章的规格库存参考，以及最近的训练任务。它是独立的非官方客户端，与两个平台均无隶属关系。
 
+## 界面示例
+
+<img src="docs/images/overview.png" alt="GPUBar 界面示例：菜单栏摘要、前海 GPU 未分配量、九章规格库存，以及排队和运行中的任务" width="496">
+
+使用应用原生界面和虚构数据渲染，面板加高以完整展示任务列表。图中数量不代表实时资源。
+
 ## 功能
 
 - 菜单栏同时显示两平台摘要，例如 `Q 16 · J 24`。
