@@ -31,21 +31,29 @@ extension JobState {
 
 struct MenuLabel: View {
     @ObservedObject var store: AppStore
+    private var platforms: [Platform] {
+        Platform.allCases.filter { store.configured.contains($0) && store.configuration.isConfigured($0) }
+    }
     private var title: String {
-        Platform.allCases.map { platform in
+        platforms.map { platform in
             let value = store.snapshots[platform]?.capacity?.availableGPUs.map(String.init) ?? "—"
             return "\(platform.abbreviation) \(value)"
         }.joined(separator: " · ")
     }
     var body: some View {
-        // MenuBarExtra bridges its label to a native status item. Keep both
-        // platforms in one Text so neither is lost during label extraction.
-        Text(title)
-            .monospacedDigit()
-            .fixedSize()
-            .opacity(Platform.allCases.contains { store.stale($0) } ? 0.55 : 1)
-            .accessibilityLabel("GPUBar GPU 资源摘要：\(title)")
-            .help("Q：前海健康节点未分配 GPU；J：九章所选机房库存参考。点击查看范围与任务。")
+        if platforms.isEmpty {
+            Image(systemName: "square.stack.3d.up.fill")
+                .accessibilityLabel("GPUBar")
+                .help("GPUBar：点击配置平台")
+        } else {
+            // Keep all platforms in one Text for native status-item extraction.
+            Text(title)
+                .monospacedDigit()
+                .fixedSize()
+                .opacity(platforms.contains { store.stale($0) } ? 0.55 : 1)
+                .accessibilityLabel("GPUBar GPU 资源摘要：\(title)")
+                .help("GPUBar：点击查看资源与任务")
+        }
     }
 }
 
@@ -56,7 +64,8 @@ struct DashboardView: View {
     @Environment(\.openWindow) private var openWindow
     private var platforms: [Platform] { selected == "overview" ? Platform.allCases : Platform.allCases.filter { $0.rawValue == selected } }
     private var recentJobs: [Job] {
-        Array(platforms.flatMap { store.snapshots[$0]?.jobs ?? [] }.sorted {
+        Array(platforms.flatMap { store.snapshots[$0]?.jobs ?? [] }
+            .filter { !store.runningOnly || $0.state == .running }.sorted {
             let left = $0.createdAt ?? .distantPast
             let right = $1.createdAt ?? .distantPast
             return left == right ? $0.id < $1.id : left > right
@@ -85,8 +94,9 @@ struct DashboardView: View {
                     HStack {
                         Text("最近任务").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
                         Spacer()
-                        Text(store.filter.isEmpty ? "全部名称" : "名称含 \(store.filter)")
-                            .font(.system(size: 11)).foregroundStyle(.tertiary).lineLimit(1)
+                        Toggle("仅运行中", isOn: $store.runningOnly)
+                            .toggleStyle(.checkbox).controlSize(.small)
+                            .font(.system(size: 11)).foregroundStyle(.secondary)
                     }.padding(.top, 4).padding(.horizontal, 2)
                     ForEach(platforms) { platform in
                         if let error = store.errors[platform]?["jobs"] {
@@ -129,11 +139,11 @@ struct DashboardView: View {
         if platforms.allSatisfy({ !store.configured.contains($0) }) { return "连接平台以查看任务" }
         if platforms.allSatisfy({ store.snapshots[$0]?.jobsAt == nil }) { return store.refreshing.isEmpty ? "尚未获取任务" : "正在读取任务…" }
         if platforms.contains(where: { store.errors[$0]?["jobs"] != nil }) { return "任务查询未完成" }
-        return "没有匹配的任务"
+        return store.runningOnly ? "没有运行中的任务" : "没有匹配的任务"
     }
     private var emptySubtitle: String {
-        if platforms.allSatisfy({ !store.configured.contains($0) }) { return "在设置中保存两个平台的 Access Key。" }
-        return store.filter.isEmpty ? "显示所选范围内的平台任务。" : "仅显示名称包含“\(store.filter)”的任务。"
+        if platforms.allSatisfy({ !store.configured.contains($0) }) { return "在设置中连接要查看的平台。" }
+        return store.runningOnly ? "取消勾选可查看其他状态的任务。" : "可在设置中调整任务筛选。"
     }
 }
 
@@ -201,7 +211,7 @@ struct CapacityCard: View {
                 if let error = store.errors[platform]?["capacity"] ?? store.errors[platform]?["credentials"] ?? store.errors[platform]?["configuration"] {
                     Label(error, systemImage: "exclamationmark.triangle").font(.system(size: 10)).foregroundStyle(.orange)
                 }
-                if platform == .jiuzhang {
+                if expanded && platform == .jiuzhang {
                     Text("库存不等于可调度数量").font(.system(size: 10)).foregroundStyle(.secondary)
                 }
                 if expanded, let explanation = snapshot.capacity?.explanation {

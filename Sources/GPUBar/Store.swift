@@ -19,6 +19,11 @@ final class AppStore: ObservableObject {
     @Published var filter: String
     @Published var interval: Double
     @Published var notifications: Bool
+    @Published var runningOnly: Bool {
+        didSet {
+            if !preview { UserDefaults.standard.set(runningOnly, forKey: "runningJobsOnly") }
+        }
+    }
     @Published var notice: String?
     let preview: Bool
     private var tasks: [Platform: Task<Void, Never>] = [:]
@@ -44,6 +49,7 @@ final class AppStore: ObservableObject {
         let saved = defaults.double(forKey: "refreshInterval")
         self.interval = [30.0, 60, 120, 300].contains(saved) ? saved : 60
         self.notifications = defaults.bool(forKey: "notifyOnCompletion")
+        self.runningOnly = preview ? false : defaults.bool(forKey: "runningJobsOnly")
         if preview { loadPreview(); return }
         if let data = try? Data(contentsOf: cacheURL), let cache = try? JSONDecoder().decode([Platform: Snapshot].self, from: data) {
             snapshots = cache
