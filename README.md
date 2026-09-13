@@ -47,7 +47,13 @@ GPUBar 将前海 ACP 和九章极核训练的 GPU 资源、任务状态与完成
 
 两个平台独立更新。查询暂时失败时，面板保留最后成功数据并标记过期状态，随后自动重试。Mac 休眠时暂停轮询，唤醒或网络恢复后重新查询。需要开机后持续使用时，可将应用放入 Applications，并在设置中开启“登录时启动 GPUBar”。
 
-## 构建与启动
+## 下载安装
+
+从 [GitHub Releases](https://github.com/haowen-xiong/GPUBar/releases/latest) 下载 `GPUBar-*-macOS-arm64.zip`，解压后将 `GPUBar.app` 拖入 Applications 并打开。发布包适用于 **macOS 15+、Apple Silicon**。
+
+点击菜单栏中的 `Q — · J —`，进入“设置”连接平台，并按需开启任务通知和登录启动。
+
+## 从源码构建
 
 需要 **macOS 15+、Swift 6 工具链和 Apple Command Line Tools**。界面为中文，无第三方包依赖。
 
