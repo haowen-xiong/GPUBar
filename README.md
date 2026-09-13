@@ -1,27 +1,55 @@
 # GPUBar
 
-A native macOS menu bar monitor for Qianhai ACP and Jiuzhang HyperTrain. Track GPU headroom, inventory references, and recent jobs using your own credentials and resource configuration.
+A native macOS menu bar app for monitoring GPU resources and training jobs on Qianhai ACP and Jiuzhang HyperTrain, with desktop notifications when jobs succeed or fail.
 
-GPUBar 在 macOS 菜单栏中显示前海 ACP 的 GPU 未分配余量、九章的规格库存参考，以及最近的训练任务。它是独立的非官方客户端，与两个平台均无隶属关系。
+GPUBar 将前海 ACP 和九章极核训练的 GPU 资源、任务状态与完成通知集中到 macOS 菜单栏。查看剩余资源、跟踪训练任务，或在任务结束时收到提醒，无需反复打开平台控制台。
 
 ## 界面示例
 
 <img src="docs/images/overview.png" alt="GPUBar 界面示例：菜单栏摘要、前海 GPU 未分配量、九章规格库存，以及排队和运行中的任务" width="496">
 
-使用应用原生界面和虚构数据渲染，面板加高以完整展示任务列表。图中数量不代表实时资源。
+原生界面渲染，使用示例数据；面板加高以完整展示任务列表。
 
 ## 功能
 
-- 菜单栏同时显示两平台摘要，例如 `Q 16 · J 24`。
-- 自行配置前海订阅、资源池、工作空间，以及九章智算中心 ID。
-- 按名称筛选任务，忽略大小写；默认留空。显示最近 10 个匹配任务，可查看状态、资源、时间和任务 ID。
-- 默认每 60 秒刷新，可选 30 秒、2 分钟、5 分钟；支持手动刷新、独立错误提示、过期数据标记和休眠唤醒。
-- 可选任务成功／失败通知、登录启动，默认关闭。
-- 凭据保存在 macOS 钥匙串；直接查询平台 HTTPS API，不依赖 SSH 或常驻后端。
+| 功能 | 使用方式 |
+|---|---|
+| 菜单栏资源摘要 | 同时显示两个平台的数字，例如 `Q 16 · J 37`，随后台刷新更新 |
+| 双平台总览 | 点击菜单栏查看两平台资源卡片，也可切换到前海或九章单独查看 |
+| GPU 资源明细 | 前海展示总量、健康节点未分配量和比例条；九章展示 GPU 型号及 1／2／4／8 卡等规格的库存 |
+| 任务进展跟踪 | 查看排队、启动、运行、暂停、完成、失败和取消状态，以及等待时间或运行时长 |
+| 任务筛选与详情 | 按名称筛选最近任务，查看 GPU 数量、节点数、时间和平台返回的状态详情，复制任务 ID 或打开控制台 |
+| 桌面通知 | 任务成功或失败时发送 macOS 通知，显示平台、结果和任务名称 |
+| 自动刷新 | 可选 30 秒、60 秒、2 分钟或 5 分钟，也可随时手动刷新 |
+| 登录启动 | 登录 Mac 后自动运行，在菜单栏持续监控 |
+
+### 跟踪任务进展
+
+在“设置 → 任务名称包含”中输入项目名、实验前缀或用户名，例如 `demo`。筛选忽略大小写，留空可查看所选资源范围内的所有任务。面板按创建时间从新到旧显示最近 10 个匹配任务；总览合并两个平台，单平台标签只显示该平台任务。
+
+每条任务显示名称、状态、所属平台、GPU 数量和耗时。排队或启动中的任务显示等待时间，运行中的任务显示已运行时长，结束任务在平台提供起止时间时显示总用时。资源卡片同时统计匹配任务的运行数和排队数。
+
+点击任务可查看完整名称、任务 ID、节点数、创建／启动／结束时间、原始状态及平台返回的详情。详情窗口提供“复制 ID”和“打开平台控制台”入口，便于继续检查任务。
+
+### 接收任务通知
+
+1. 打开“设置 → 通用”，开启“任务完成或失败时通知”。
+2. 在 macOS 授权提示中允许通知；也可在“系统设置 → 通知 → GPUBar”中调整通知展示方式。
+3. 保持 GPUBar 运行。当刷新检测到已跟踪任务从未结束状态转为成功或失败时，应用发送通知。
+
+例如，`demo-model-train` 成功结束后，通知标题为 **“前海 · 已完成”**，正文为任务名称；九章任务失败时，标题为 **“九章 · 失败”**。
+
+通知遵循任务名称筛选和资源范围，触发时间取决于刷新间隔。首次读取任务时建立状态基线，之后提醒检测到的变化，同次运行中相同事件只通知一次。通知开关默认关闭。
+
+### 自动刷新与后台运行
+
+默认每 60 秒刷新资源和任务。点击面板右上角的刷新按钮可立即查询；打开面板时，距上次更新超过 15 秒的数据会自动刷新。
+
+两个平台独立更新。查询暂时失败时，面板保留最后成功数据并标记过期状态，随后自动重试。Mac 休眠时暂停轮询，唤醒或网络恢复后重新查询。需要开机后持续使用时，可将应用放入 Applications，并在设置中开启“登录时启动 GPUBar”。
 
 ## 构建与启动
 
-需要 **macOS 15+、Swift 6 工具链和 Apple Command Line Tools**。界面目前为中文。无第三方包依赖。
+需要 **macOS 15+、Swift 6 工具链和 Apple Command Line Tools**。界面为中文，无第三方包依赖。
 
 ```sh
 git clone https://github.com/haowen-xiong/GPUBar.git
@@ -31,82 +59,72 @@ cd GPUBar
 open dist/GPUBar.app
 ```
 
-自签名构建的身份可能随重编译变化，钥匙串可能需要重新授权或再次保存凭据；后台读取遇到授权问题时会显示错误。文件型 macOS 钥匙串使用兼容 API 禁止后台授权弹窗，因此编译时会出现相应弃用警告。
+启动后，点击菜单栏中的 `Q — · J —`，进入“设置”配置平台。应用可移至 Applications 使用。
 
-构建采用当前 Mac 的处理器架构；本项目已在 Apple Silicon 上验证，Intel 尚未实机验证。`package.sh` 使用本机 ad hoc 签名，不包含 Developer ID 签名或 Apple 公证。可将应用移到 Applications 后启动；菜单栏入口为 `Q — · J —`。在入口中点“设置”完成配置。
+构建采用当前 Mac 的处理器架构，已在 Apple Silicon 上验证；打包脚本使用本机 ad hoc 签名。
 
 ## 首次配置
 
-两个平台可以只配置其中一个。每个平台都需要**自己的凭据和资源范围**；未配置的平台不会发出查询。
+可连接一个或两个平台。为要使用的平台填写资源范围，点击“保存监控设置”，再在“平台凭据”中输入 Access Key 和 Secret Key，点击“保存并连接”。
 
 ### 前海 ACP
 
-在“前海 ACP 资源范围”中填写：
+展开“前海 ACP 资源范围”，填写以下字段：
 
 | 字段 | 含义 |
 |---|---|
-| 订阅 ID | 自己账号可访问的 subscription ID |
+| 订阅 ID | 账号可访问的 subscription ID |
 | 资源组 | 资源所在的 resource group，默认 `default` |
 | 节点可用区 | ACP 资源池所在可用区，默认 `cn-sz-01a` |
 | 任务可用区 | ACP 工作空间所在可用区，默认 `cn-sz-01z` |
-| 资源池标识 | API 中的资源池名称；不一定等同于控制台显示名称 |
+| 资源池标识 | API 中的资源池名称 |
 | 工作空间标识 | 训练任务所属 workspace |
 
-从已有任务配置或平台控制台获取这些标识，保存监控设置，再在“平台凭据”中输入 Access Key 和 Secret Key。
-
-当前适配器连接前海深圳接口 `aec2.cn-sz-01.qhsgaiccapi.com`，使用 HMAC 签名；它只监控 ACP，不统计 CCI。其他地域、不同 API 部署或不同授权机制尚未验证。
+这些标识可从已有任务配置或平台控制台获取。当前支持前海深圳 ACP，连接 `aec2.cn-sz-01.qhsgaiccapi.com`，使用 HMAC AK/SK 认证。
 
 ### 九章
 
-在“九章智算中心”中填写自己账号可访问的 **`aidcId`**；显示名称可选，仅用于标注。保存后配置九章 Access Key 和 Secret Key。
+展开“九章智算中心”，填写账号可访问的 **智算中心 ID（`aidcId`）**。可选填“显示名称”，用于在资源卡片上标注机房。
 
-智算中心 ID 应以自己的平台目录为准，可参考[智算中心列表 API](https://docs.alayanew.com/en/docs/api-reference/aidc)。当前适配器使用 `api.alayanew.com/api/osm/v1/` 的 HMAC AK/SK 接口；仅有 Bearer API Key 的账号不能直接使用此实现。
+智算中心 ID 可参考[智算中心列表 API](https://docs.alayanew.com/en/docs/api-reference/aidc)。当前连接 `api.alayanew.com/api/osm/v1/`，使用 HMAC Access Key／Secret Key 凭据。
 
-## 数字的含义
+## 资源数字的含义
 
-| 平台 | 摘要含义 | 限制 |
+| 平台 | 菜单栏数字 | 面板明细 |
 |---|---|---|
-| 前海 Q | 健康、启用节点的 GPU 容量减去已分配量 | CPU、内存、节点碎片、任务条件仍会影响调度 |
-| 九章 J | 所选机房唯一 1 卡规格的 `remainingCount` | **库存参考，不是已验证的可调度卡数** |
+| 前海 Q | 健康、启用节点的 GPU 容量减去已分配量 | GPU 总量、未分配量、比例条和型号 |
+| 九章 J | 所选机房唯一 1 卡规格的库存数 `remainingCount` | 各 GPU 规格的库存份数和型号 |
 
-九章的 1／2／4／8 卡规格可能共享库存，不能相加；没有唯一 1 卡规格、库存字段缺失或平台报告库存异常时，摘要显示 `—`。完整规格库存可在面板中查看。
+九章不同规格可能共享库存，不能相加；库存是资源参考，实际调度还取决于节点状态、CPU／内存、配额和任务条件。数据缺失或库存异常时，摘要显示 `—`。
 
-即使库存大于任务所需卡数，故障节点、禁止调度、CPU／内存不足、配额、优先级或多节点同时启动条件仍可能阻止任务运行。GPUBar 当前不查询整个九章集群的节点健康情况，也不推算“实际可调度 GPU 总数”。
+任务资源优先展示已确认的分配量：前海运行任务通过 Worker 查询确认，其他情况显示申请量；九章显示申请量。任务进展以平台状态和时间表示。
 
-任务匹配仅使用前海 `display_name`、九章 `name`。名称不代表资源归属。前海运行任务会查询 Worker 确认实际分配量；无法确认时显示“申请”。九章显示申请量。这里显示的是平台状态和时间，不提供训练 step、loss 或完成百分比。
+## 本地数据
 
-## 刷新与本地数据
-
-- 资源和任务独立更新，两个平台互不阻塞。失败时保留最后成功数据，显示错误；自动重试逐步延迟，最长 15 分钟。
-- 打开面板时数据超过 15 秒会刷新。休眠时停止轮询，唤醒或网络恢复后刷新；网络请求有超时和分页完整性检查。
-- 切换资源范围后清空旧范围缓存；修改筛选词后重新读取任务。
-- 通知仅针对本次运行中观察到的成功／失败状态变化，不批量通知历史结果。资源阈值通知和 iPhone 客户端尚未提供。
+GPUBar 直接通过 HTTPS 查询平台 API，无需 SSH 或常驻后端。凭据与监控设置保存在本机：
 
 | 数据 | 存放位置 |
 |---|---|
-| AK/SK | macOS 钥匙串，服务 `io.github.haowen-xiong.GPUBar.platform-credentials` |
+| Access Key／Secret Key | macOS 钥匙串，服务 `io.github.haowen-xiong.GPUBar.platform-credentials` |
 | 资源范围、筛选、刷新设置 | `com.haowen.GPUBar` 的 UserDefaults |
 | 最近成功快照 | `~/Library/Application Support/GPUBar/snapshots.json`，权限 600 |
-
-应用只发送平台查询请求，不提交、修改或停止云任务。资源标识不是密码，但可能暴露账号环境；发布 issue、截图或日志前请移除私人信息。不要上传钥匙串数据、真实配置或运行快照。
 
 ## 开发与诊断
 
 ```sh
-# 界面预览：模拟数据，不访问平台或写入配置。
+# 使用模拟数据预览界面。
 open dist/GPUBar.app --args --preview
 
-# 用普通窗口查看总览，便于调试。
+# 用普通窗口查看总览。
 open dist/GPUBar.app --args --dashboard
 
-# 从钥匙串和本机设置发起只读查询。
-# 输出包含任务信息，不要直接发布到公开 issue。
+# 使用本机配置查询平台，并输出资源和任务 JSON。
 dist/GPUBar.app/Contents/MacOS/GPUBar --probe
 ```
 
 切换启动参数前先退出正在运行的 GPUBar。可用 `GPUBAR_BUILD_DIR` 指定构建缓存目录；`package.sh` 第一个参数指定应用输出目录。
 
-也可以用 JSON 导入资源范围。示例中的标识均为虚构值，需替换成本机配置；`*.local.json` 已被 Git 忽略。
+也可以从 JSON 导入资源范围。复制示例并填写自己的配置：
 
 ```sh
 cp examples/config.example.json config.local.json
@@ -114,14 +132,16 @@ cp examples/config.example.json config.local.json
 dist/GPUBar.app/Contents/MacOS/GPUBar --import-config < config.local.json
 ```
 
-凭据建议在设置中输入。自动化场景的 `--import-credentials` 从标准输入读取 `{ "qianhai": { "accessKey": "…", "secretKey": "…" }, "jiuzhang": { "accessKey": "…", "secretKey": "…" } }`，不从命令行参数读取秘密。不要将真实凭据写入源码、提交历史或日志。
+凭据可在设置中输入。自动化场景中，`--import-credentials` 从标准输入读取 `{ "qianhai": { "accessKey": "…", "secretKey": "…" }, "jiuzhang": { "accessKey": "…", "secretKey": "…" } }`。
 
-`./scripts/test.sh` 运行无网络、无凭据的独立 Swift 检查程序，不依赖 XCTest。检查覆盖签名、时区、筛选、配置校验、范围隔离、共享库存、库存异常、健康节点统计、GPU 别名、多节点申请和分页失败。GitHub Actions 会执行这些检查并构建应用。
+`*.local.json` 已被 Git 忽略；分享配置或诊断输出时，请移除凭据和私人任务信息。
+
+`./scripts/test.sh` 运行无网络的独立 Swift 检查程序，覆盖签名、时区、筛选、配置校验、范围隔离、共享库存、库存异常、健康节点统计、GPU 计数、多节点申请和分页处理。GitHub Actions 自动执行检查并构建应用。
 
 ## 贡献与许可
 
-欢迎通过 issue 或 pull request 提交问题和改进。请提供 macOS／Swift 版本、复现步骤及脱敏错误信息；新接口或资源计量逻辑应附上虚构的响应样例和相应检查。
+欢迎通过 issue 或 pull request 提交问题和改进。报告问题时请提供 macOS／Swift 版本、复现步骤和相关错误信息；扩展平台接口时可附上示例响应和检查用例。
 
-界面组织参考 [CodexBar](https://github.com/steipete/CodexBar) 的菜单栏监控方式；本仓库没有包含其源码或素材。平台字段可参考[九章规格接口](https://docs.alayanew.com/en/docs/api-reference/distributed-training/product-list)。API 可能发生变化，未覆盖的平台版本不保证兼容。
+界面组织参考 [CodexBar](https://github.com/steipete/CodexBar) 的菜单栏监控方式。九章资源字段可参考[规格接口文档](https://docs.alayanew.com/en/docs/api-reference/distributed-training/product-list)。
 
 [MIT License](LICENSE) · Copyright © 2026 Haowen Xiong
