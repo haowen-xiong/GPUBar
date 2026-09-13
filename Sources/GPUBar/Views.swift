@@ -94,7 +94,7 @@ struct DashboardView: View {
                     HStack {
                         Text("最近任务").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
                         Spacer()
-                        Toggle("仅运行中", isOn: $store.runningOnly)
+                        Toggle("运行中", isOn: $store.runningOnly)
                             .toggleStyle(.checkbox).controlSize(.small)
                             .font(.system(size: 11)).foregroundStyle(.secondary)
                     }.padding(.top, 4).padding(.horizontal, 2)
